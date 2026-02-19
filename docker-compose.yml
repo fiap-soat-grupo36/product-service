@@ -1,0 +1,63 @@
+services:
+  # ========================================
+  # 1. POSTGRES DATABASE
+  # ========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    profiles:
+      - dev
+      - prod
+    environment:
+      POSTGRES_DB: oficina-db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - oficina-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d oficina-db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ========================================
+  # 2. OFICINA APPLICATION
+  # ========================================
+  oficina-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: oficina-app
+    profiles:
+      - dev
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_URL: jdbc:postgresql://postgres:5432/oficina-db
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    networks:
+      - oficina-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 -O /dev/null http://localhost:8080/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+networks:
+  oficina-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
