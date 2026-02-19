@@ -1,0 +1,26 @@
+package br.com.fiap.oficina.product_service.repository.estoque;
+
+
+import br.com.fiap.oficina.product_service.entity.estoque.ProdutoEstoque;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface ProdutoEstoqueRepository extends JpaRepository<ProdutoEstoque, Long> {
+
+    Optional<ProdutoEstoque> findByProdutoCatalogoId(Long produtoCatalogoId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM ProdutoEstoque p WHERE p.produtoCatalogoId = :produtoCatalogoId")
+    Optional<ProdutoEstoque> findByProdutoCatalogoIdForUpdate(@Param("produtoCatalogoId") Long produtoCatalogoId);
+
+    @Query("SELECT p FROM ProdutoEstoque p WHERE p.quantidadeDisponivel < p.estoqueMinimo")
+    List<ProdutoEstoque> findBaixoEstoque();
+}
