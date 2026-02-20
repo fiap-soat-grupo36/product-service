@@ -130,7 +130,7 @@ docker ps | grep postgres-oficina
 
 **2. Build do projeto**
 ```bash
-cd oficina-microservices
+cd product-service
 
 # Compilar todos os módulos (necessário por causa da shared-library)
 mvn clean install -DskipTests
